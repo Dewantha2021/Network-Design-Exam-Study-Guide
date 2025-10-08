@@ -1,6 +1,6 @@
-# Network Design Exam Study Guide
+# Network Design Exam - Compact Study Guide
 
-> **5 Major Questions:** Network Characterization | Topology Design | Addressing | Protocol Selection | Testing
+> **5 Core Topics:** Requirements | Topology | Addressing | Protocols | Testing
 
 ---
 
@@ -8,125 +8,120 @@
 
 ### How to gather documentation regarding addressing and naming schemes
 
-| Documentation Item | What to Include |
-|-------------------|----------------|
-| **Logical Structure** | Network topology, areas, zones |
-| **Physical Structure** | Device locations, connections |
-| **Addressing** | IP for major devices, clients, servers |
-| **Naming** | DNS structure, hostnames |
-| **Wiring/Media** | Cable types, fiber runs |
-| **Constraints** | Budget, regulatory, physical |
-| **Health** | Performance metrics, availability |
+| What to Document | Details |
+|-----------------|---------|
+| **Major Devices** | IP addressing for core infrastructure |
+| **Client Networks** | End-user network ranges |
+| **Server Networks** | Server/application IP ranges |
+| **Oddities** | Look for discontiguous subnets |
+
+**Hospital Issues Found:**
+- ❌ Inconsistent IPv4 private addressing
+- ❌ No central DNS
 
 ### Explaining potential "audities" like "discing" (Addressing Oddities/Discontiguous Subnets)
 
-**Discontiguous Subnets** = subnets from one area separated by different network area
+**Discontiguous Subnets** = Subnets from one area separated by different area
 
 ```
-Area 1 Subnets ← separated by → Area 0 (192.168.49.0) ← separated by → Area 2 Subnets
+Area 1 Subnets ←─→ Area 0 (192.168.49.0) ←─→ Area 2 Subnets
+     [Separated by different network area]
 ```
-
-**Hospital Network Issues:**
-- ❌ Inconsistent IPv4 private addressing
-- ❌ No central DNS namespace
 
 ### Discussing the prioritization, media, and architectural constraints specific to a rural setting
 
-| Constraint Type | Details |
-|----------------|---------|
+| Constraint Type | Requirements |
+|----------------|--------------|
 | **Budget** | Limited funding |
-| **Regulatory** | Health data MUST stay in Sri Lanka → LGC 2.0 hosting required |
-| **Rural Fiber** | Unavailable or economically infeasible → **Solution: Starlink** |
-| **Power/HVAC** | Power, AC, heating, ventilation needed |
-| **Physical Security** | Lockable doors, secure spaces |
-| **Space** | Room for: conduits, patch panels, racks, work areas |
+| **Data Sovereignty** | Health data MUST stay in Sri Lanka → LGC 2.0 hosting |
+| **Rural Fiber** | Unavailable/not feasible → **Solution: Starlink** |
+| **Architectural** | Power, AC, heating, ventilation, physical security (lockable doors) |
 
-**Media Types to Check:**
-Single-mode fiber | Multi-mode fiber | STP/UTP copper | Coaxial | Microwave | Laser | Radio | Infra-red
+### Addressing environmental factors that might affect connectivity technologies like ADSL
 
-### Addressing environmental factors that might affect connectivity technologies like ADSL or the "340 network"
+**Existing ADSL Performance:**
+- ~5 Mbps down / 1 Mbps up
+- 🔴 High latency/jitter
+- 🔴 Frequent outages
 
-**Wireless Environmental Factors:**
+**Wireless Factors (Starlink):**
 ```
 Reflection → Absorption → Refraction → Diffraction
 ```
 
-**Existing ADSL Problems:**
-- 🔴 High latency/jitter
-- 🔴 Frequent outages
-
 ### Describing how to assess network health by using performance matrices such as latency and availability
 
-| Metric | Formula/Measure | Target |
-|--------|----------------|--------|
+| Metric | Measurement | Target |
+|--------|-------------|--------|
 | **Availability** | MTBF & MTTR | ≥99% for critical services |
-| **Performance/Latency** | Delay, RTT | <250ms RTT for telemedicine |
-| **Response Time** | Request → Response time | Most important to users |
-| **Bandwidth Utilization** | Usage vs capacity | Monitor trends |
+| **Response Time** | Request → Response | Users care most about this |
+| **Performance** | Latency/delay | Monitor continuously |
+| **Bandwidth Utilization** | Usage vs capacity | Track trends |
 | **Accuracy** | Error rates | Minimize |
-| **Efficiency** | Throughput vs resources | Optimize |
 
 ---
 
-## 🏗️ Question 2: Designing the Network Topology
+## 🏗️ Question 2: Designing the Network Topology (Chapter 5)
 
 ### Designing a new topology for the possible design that gets the starting collector
 
 **Architecture:** Hierarchical Model + Starlink WAN Backbone
 
 ```
-┌─────────────────────────────────────┐
-│  CORE LAYER                         │
-│  3 Hub Hospitals + LGC 2.0          │
-└──────────────┬──────────────────────┘
-               │
-┌──────────────▼──────────────────────┐
-│  DISTRIBUTION LAYER                 │
-│  Regional aggregation, routing,     │
-│  VLAN segmentation                  │
-└──────────────┬──────────────────────┘
-               │
-┌──────────────▼──────────────────────┐
-│  ACCESS LAYER                       │
-│  7 Branch Hospitals + switches +    │
-│  edge firewalls                     │
-└─────────────────────────────────────┘
+┌──────────────────────────────┐
+│   CORE LAYER                 │
+│   3 Hub Hospitals            │
+│   + LGC 2.0 Cloud            │
+└─────────────┬────────────────┘
+              │
+┌─────────────▼────────────────┐
+│   DISTRIBUTION LAYER         │
+│   Policy, Segmentation       │
+│   Inter-VLAN Routing         │
+└─────────────┬────────────────┘
+              │
+┌─────────────▼────────────────┐
+│   ACCESS LAYER               │
+│   7 Branch Hospitals         │
+│   User Connections           │
+└──────────────────────────────┘
 ```
 
 ### Explaining the key design themes—hierarchy, redundancy, and modularity—and justifying why they are suitable for the root
 
-| Theme | Benefits | Implementation |
-|-------|----------|----------------|
-| **Hierarchy** | • Reduces device workload (no excessive CPU adjacencies)<br>• Constrains broadcast domains<br>• Simplifies design<br>• Easy to scale | 3-layer model (Core/Dist/Access) |
-| **Redundancy** | • High availability<br>• No single point of failure | • Dual uplinks (Starlink + LTE/5G)<br>• VRRP/HSRP failover |
-| **Modularity** | • Local changes only<br>• Easy to add new sites | New additions affect only directly-connected devices |
+| Theme | Benefits | Why Suitable |
+|-------|----------|--------------|
+| **Hierarchy** | • Constrains broadcast domains<br>• Simplifies scaling<br>• Reduces CPU adjacencies | Essential for 10-site network |
+| **Redundancy** | • High availability<br>• No single point of failure | Critical for healthcare |
+| **Modularity** | • Local changes only<br>• Easy troubleshooting | Growth without disruption |
+
+**Redundancy Implementation:**
+- Dual uplinks: Starlink (primary) + LTE/5G (backup)
+- Internal failover: VRRP/HSRP
 
 ### Discussing the application of the Cisco hierarchical model (core, distribution, access layer) for a 10-site setup
 
-| Layer | Function | Optimization | Hospital Setup (10 sites) |
-|-------|----------|-------------|---------------------------|
-| **Core** | High-speed backbone | Availability + Speed | 3 Hub hospitals + LGC 2.0 |
-| **Distribution** | Policy enforcement | Segmentation + Routing | Inter-VLAN routing at hubs |
-| **Access** | User connectivity | Access + QoS | All 10 sites (3 hubs + 7 branches) |
+| Layer | Role | Optimization | 10-Site Implementation |
+|-------|------|--------------|------------------------|
+| **Core** | High-speed backbone | Availability + Throughput | 3 Hubs + LGC 2.0 egress |
+| **Distribution** | Policy enforcement | Traffic segmentation | Inter-VLAN routing at hubs |
+| **Access** | User connectivity | PoE for phones/APs | All sites (3 hubs + 7 branches) |
 
 ### Describing how to incorporate redundant approaches to avoid issues with the chain or backbone in the design
 
-**⚠️ AVOID:** Chains & Backdoors
+**⚠️ AVOID:** Chain and backdoor topologies
 
-**✅ REDUNDANCY METHODS:**
+| Layer | Redundancy Method | Technology |
+|-------|------------------|-----------|
+| **Layer 3** | Router failover | HSRP/VRRP |
+| **Layer 2** | Loop prevention | STP (Spanning-Tree Protocol) |
+| **WAN** | Dual uplinks | Starlink + LTE/5G |
 
-| Method | Purpose | Technology |
-|--------|---------|-----------|
-| Dual WAN Links | Failover capability | Starlink (primary) + LTE/5G (secondary) |
-| Router Redundancy | Local failover | VRRP/HSRP at hubs |
-| Switch Redundancy | Loop prevention | STP (Spanning-Tree Protocol) |
-
-### Explaining the use of VLAN technologies across switches in a campus network, specifically for addressing roaming for telemedicine devices
+### Explaining the use of VLAN technologies across switches, specifically for addressing roaming for telemedicine devices
 
 **VLAN Benefits:**
-- Emulates standard LAN
 - Constrains broadcast traffic
-- Separates devices administratively
+- Segments devices administratively
 
 **Roaming Solution:**
 
@@ -135,42 +130,39 @@ Telemedicine Device moves between locations
          ↓
 Stays in VLAN 30 (same VLAN + IP subnet)
          ↓
-No address change needed = Seamless roaming
+Addressing doesn't change = Seamless roaming
 ```
-
-**Design:** VLAN 30 = Telemedicine devices
 
 ---
 
-## 🔢 Question 3: Design Model for Addressing and Naming
+## 🔢 Question 3: Design Model for Addressing and Naming (Chapter 6)
 
 ### Differentiating between public and private IP addresses
 
-| Type | Managed By | Ranges | Usage |
+| Type | Authority | Ranges | Usage |
 |------|-----------|--------|-------|
 | **Public** | IANA/ISPs | Assigned by ISP | Internet-routable |
-| **Private** | Self-managed | 10.0.0.0/8<br>172.16.0.0/12<br>192.168.0.0/16 | Internal only |
+| **Private** | Self-managed | 10.0.0.0/8<br>172.16.0.0/12<br>192.168.0.0/16<br>IPv6 ULA: fd00::/8 | Internal only |
 
-### Explaining how NAT (Network Address Translation) is used with public IP at the ruler/rural site
+### Explaining how NAT (Network Address Translation) is used with public IP at the rural site
 
 **NAT Process:**
 
 ```
-Internal Device (10.x.x.x:5000)
+Internal Host (10.x.x.x:5000)
          ↓
     NAT Router
          ↓
-Single Public IP (203.x.x.x:12345)
+Single Public IP (port mapping)
          ↓
     Internet
 ```
 
 | Aspect | Details |
 |--------|---------|
-| **Starlink Provides** | 1 public IPv4 address |
-| **NAT Location** | Edge router/provider CPE |
-| **Process** | Internal IP:Port → Public IP:Unique Port |
-| **Security Benefit** | Internal devices invisible from outside |
+| **Why Needed** | Starlink provides only 1 public IPv4 |
+| **Function** | Replaces internal IP:port → public IP:unique port |
+| **Security Benefit** | Internal hosts hidden from outside world |
 
 ### Designing an IP addressing scheme for the private range, including requirements for subnetting, data, and scalability
 
@@ -179,22 +171,24 @@ Single Public IP (203.x.x.x:12345)
 | Component | Range | Purpose |
 |-----------|-------|---------|
 | **Core/Backbone** | 10.0.0.0/22 | Large aggregation space |
-| **Hub H (H=1-3)** | 10.H.0.0/24 | Each hub gets /24 |
-| **Branch B (B=11-17)** | 10.B.0.0/24 | Each branch gets /24 |
-| **Per-VLAN Subnets** | /26 or /25 | Split site /24 by VLAN |
-| **IPv6 (Future)** | fd00::/8 ULA | Internal IPv6 ranges |
+| **Hubs** | 10.H.0.0/24 (H=1-3) | Each hub gets /24 |
+| **Branches** | 10.B.0.0/24 (B=11-17) | Each branch gets /24 |
+| **Per-VLAN** | /26 or /25 | Split site /24 by VLAN |
+| **IPv6 Future** | fd00::/8 ULA | Internal IPv6 ranges |
 
-**Benefits:** ✅ Scalability ✅ Data Separation ✅ Future-Proofing
+**Design Goals:**
+✅ Scalability  
+✅ Data Separation  
+✅ Future-Proofing
 
-### Discussing the guidelines for assigning static versus dynamic addressing (e.g., static for servers, dynamic for staff devices)
+### Discussing the guidelines for assigning static versus dynamic addressing
 
-| Criteria | Static | Dynamic (DHCP) |
-|----------|--------|----------------|
-| **Number of devices** | Few | Many |
-| **Renumbering needs** | Rarely | Frequently |
-| **High availability** | Required | Not critical |
-| **Security tracking** | Need to track | Less critical |
-| **Additional config** | Manual | DHCP provides |
+| Factor | Static | Dynamic (DHCP) |
+|--------|--------|----------------|
+| **Device Count** | Few | Many |
+| **High Availability** | Required | Not critical |
+| **Security Tracking** | Need to track | Less critical |
+| **Address Changes** | Rarely | Frequently |
 
 **Design Choice:** DHCP with **reservations** for servers + critical devices
 
@@ -202,19 +196,17 @@ Single Public IP (203.x.x.x:12345)
 
 **Implementation:**
 - 🏢 Centralized authoritative DNS in LGC 2.0
-- 📍 Hierarchical naming structure
+- 📍 Hierarchical naming
 
 **Naming Rules:**
 
-| Rule | Example |
-|------|---------|
-| Short | ✅ hub1-sw01 ❌ hub1-core-switch-floor-2-rack-3 |
-| Meaningful | ✅ telemedicine-srv ❌ server42 |
-| Unambiguous | ✅ unique names |
-| Distinct | ✅ clearly different |
-| Case insensitive | ✅ lowercase preferred |
-
-**Format:** `hostname.site.role.gov.lk` OR `service.location.gov.lk`
+| Rule | Good ✅ | Bad ❌ |
+|------|---------|--------|
+| Short | hub1-sw01 | hub1-core-switch-floor-2-rack-3 |
+| Meaningful | telemedicine-srv | server42 |
+| Unambiguous | Unique names | Duplicate/similar |
+| Distinct | Clearly different | Confusing |
+| Case insensitive | lowercase | MiXeD CaSe |
 
 ---
 
@@ -222,27 +214,30 @@ Single Public IP (203.x.x.x:12345)
 
 ### Selecting and justifying the switching and routing protocol for the hospital network to ensure reliability for the government cloud
 
-| Protocol Type | Protocol | Justification |
-|--------------|----------|---------------|
-| **Interior Routing** | OSPF | • Open standard<br>• Fast adaptation<br>• Large network support<br>• Hierarchical topology requirement |
-| **Exterior/Cloud** | BGP + IPsec | • Secure tunnels to LGC 2.0<br>• Policy-based routing |
+| Routing Type | Protocol | Justification |
+|-------------|----------|---------------|
+| **Interior** | OSPF | • Scalable<br>• Fast convergence<br>• Hierarchical topology support |
+| **Cloud Connectivity** | IPsec + BGP | • Secure tunnels to LGC 2.0<br>• Policy-based routing |
 
 ### Explaining the difference between switching (layer two bridging) and routing, and when to use each within the hospital hierarchy
 
 | | Switching (L2) | Routing (L3) |
 |-|----------------|--------------|
-| **Actions** | Forward, learn MACs, flood, filter | Share reachability info |
-| **Complexity** | ✅ Easier | ❌ More complex |
+| **Function** | Forwards frames (MAC) | Shares reachability info |
+| **Operations** | Learn, flood, filter | Route calculation |
+| **Complexity** | ✅ Easier setup | ❌ More complex |
 | **Purpose** | Same network | Different networks |
-| **When to Use** | **Default choice** + VLANs | Interconnect VLANs |
+
+**Usage Rule:**
+```
+Use Switching → Default choice
+Use Routing   → Interconnect VLANs
+```
 
 **Hospital Application:**
-
-```
-Access Layer    →  Switching (dominant)
-Distribution    →  Routing (inter-VLAN)
-Core Layer      →  Routing (WAN egress)
-```
+- **Access Layer:** Switching dominant
+- **Distribution Layer:** Routing (inter-VLAN)
+- **Core Layer:** Routing (WAN egress)
 
 ### Discussing STP (Spanning Tree Protocol) enhancement and WAN protocols to manage loops and traffic separation
 
@@ -251,29 +246,27 @@ Core Layer      →  Routing (WAN egress)
 | Enhancement | Purpose |
 |------------|---------|
 | Rapid PVST+ / MST | Reduce convergence time |
-| BPDU Guard | Protect against unauthorized switches |
-| Root Guard | Prevent topology changes |
-| Loop Guard | Prevent forwarding loops |
+| BPDU Guard | Prevent unauthorized switches |
+| Root Guard | Protect root bridge |
 
-**Traffic Management:**
+**Traffic Separation:**
 
 | Technology | Purpose |
 |-----------|---------|
 | 802.1Q VLAN Trunking | Separate traffic on distribution links |
-| SD-WAN | Intelligent path selection |
-| QoS Markings | Prioritize telemedicine + EHR |
+| SD-WAN | Policy-based path selection + failover |
 
 ### Comparing distance vector and link state routing protocols
 
 | Feature | Distance-Vector (RIP) | Link-State (OSPF) |
 |---------|----------------------|-------------------|
-| **Database** | Networks + next hop + metric | Routers + links (graph) |
-| **Updates** | Periodic (every 30s) | Event-driven (LSAs) |
-| **Best For** | Simple/flat/hub-spoke | **Hierarchical ⭐** |
-| **Convergence** | Slower OK | **Fast required ⭐** |
-| **Hospital Choice** | ❌ Not selected | ✅ **Selected** |
+| **Database** | Networks + next hop + metric | Topological graph (routers + links) |
+| **Updates** | Periodic (every 30s) | Event-driven (LSAs only on change) |
+| **Best For** | Simple, flat topologies | **Hierarchical topologies ⭐** |
+| **Convergence** | Slower | **Faster ⭐** |
+| **Hospital Choice** | ❌ | ✅ Selected |
 
-### Justifying the use of BGP (Border Gateway Protocol) for exterior routing to the government cloud, with consideration for policy-based decisions related to security
+### Justifying the use of BGP (Border Gateway Protocol) for exterior routing to the government cloud
 
 **BGP = Between Autonomous Systems**
 
@@ -281,48 +274,45 @@ Core Layer      →  Routing (WAN egress)
 Hospital AS ←──── BGP ────→ LGC 2.0 AS
 ```
 
-| Aspect | Benefit |
-|--------|---------|
-| **Scalable** | Handles large routing tables |
-| **Route Aggregation** | Reduces routing overhead |
-| **Policy Control** | ⭐ Security policies enforcement |
-| **Use Case** | Secure government cloud connection |
+| Feature | Benefit |
+|---------|---------|
+| **Scalable** | Route aggregation |
+| **Policy-Based** | ⭐ Security + control for government cloud |
+| **Exterior Protocol** | Designed for AS-to-AS communication |
 
 ---
 
-## 🧪 Question 5: Testing Your Network
+## 🧪 Question 5: Testing Your Network (Chapter 12)
 
 ### Discussing test cases
 
-**Focus:** Complex, intricate, risky features (trade-off influenced)
+**Focus:** Complex, intricate, **risky features** influenced by trade-offs
 
 **Hospital Test Objectives:**
 
-| Test | Target | Pass/Fail |
-|------|--------|-----------|
+| Test | Target | How to Verify |
+|------|--------|---------------|
 | Starlink Throughput | ≥80 Mbps | Measure actual speed |
-| Failover Time (RTO) | <30 seconds | Simulate link failure |
-| OSPF Convergence | <10 seconds | Check route updates |
-| Security Controls | ACLs + RADIUS | Verify blocks/authentication |
+| Failover Time | <30 sec RTO | Simulate link failure |
+| OSPF Convergence | <10 seconds | Monitor route updates |
 
 **Example Test Case:**
 
 ```
-1. Send traffic to blocked application
-2. Check for: TCP SYN request
-3. Expect: TCP RST (reset) from firewall
-4. Result: ✅ Pass = RST received, ❌ Fail = Connection allowed
+Test: Firewall blocks specific traffic
+1. Send TCP SYN request
+2. Expect: TCP RST (reset) from firewall
+3. Result: ✅ Pass if blocked, ❌ Fail if allowed
 ```
 
 ### Explaining the reason for testing, verifying goals, identifying broadness, and planning for contingency
 
-| Reason | Objective |
-|--------|-----------|
+| Reason | Purpose |
+|--------|---------|
 | **Verify Goals** | Meets business + technical requirements |
-| **Validate Selections** | Devices + technologies work as expected |
-| **Identify Bottlenecks** | Find connectivity/performance issues |
-| **Plan Contingencies** | Fallback if implementation fails |
-| **Acceptance Test** | Secure approval for implementation |
+| **Validate Selections** | Technology works as expected |
+| **Identify Risks** | Find potential implementation issues |
+| **Plan Contingency** | Create **fallback plan** if project fails/delays |
 
 ### Describing the components of a test plan, including objectives, test types, throughput, and regression
 
@@ -330,84 +320,124 @@ Hospital AS ←──── BGP ────→ LGC 2.0 AS
 
 | # | Component | Details |
 |---|-----------|---------|
-| 1 | **Objectives + Criteria** | Specific, concrete, clear pass/fail |
-| 2 | **Test Types** | • Response-time<br>• **Throughput**<br>• Availability<br>• **Regression** (new changes don't break existing) |
+| 1 | **Objectives** | Specific, concrete, clear pass/fail criteria |
+| 2 | **Test Types** | • Response-time<br>• **Throughput tests**<br>• Availability<br>• **Regression tests** (ensure new changes don't break existing) |
 | 3 | **Resources** | Equipment + network access |
 | 4 | **Scripts** | Test procedures |
 | 5 | **Timeline** | Milestones + deadlines |
 
 ### Outlining a prototype system used to test risky features, such as starting failovers or WAN connections
 
-**When Full Testing Impractical → Build Prototype**
+**Prototype = Test risky components when full-scale testing impractical**
 
 **Hospital Approach:**
 
 ```
 Phase 1: Pilot Deployment
     ↓
-1 Hub + 1 Branch
+1 Hub + 1 Branch (prototype)
     ↓
 Test Risky Features:
-  • Failover to secondary link
-  • OSPF convergence times
+  • Failover to secondary WAN
+  • OSPF convergence
     ↓
-Validate → Roll out to remaining sites
+Validate → Roll out remaining sites
 ```
 
-### Discussing the use of tools, specifically mentioning "pattern traces," to simulate testing on a production network while maintaining minimum disruption
+### Discussing the use of tools, specifically mentioning "pattern traces," to simulate testing on a production network
 
 **Testing Tools:**
 
-| Tool Category | Tool | Use Case |
-|--------------|------|----------|
-| **Simulation** | Packet Tracer | Configure OSPF, VLANs, NAT, cloud traffic |
+| Tool Type | Example | Use Case |
+|-----------|---------|----------|
+| **Simulation** | Packet Tracer | Configure OSPF, VLANs, NAT |
 | **Traffic Generation** | iPerf | Throughput testing |
-| **Pattern Traces** | Wireshark | Capture packets, check latency/jitter |
-| **Network Management** | Various | Monitor/manage devices |
-| **QoS Management** | Various | Service level monitoring |
+| **Pattern Traces** | Wireshark (Protocol Analyzer) | Capture traffic, analyze latency/jitter |
+| **Network Management** | Various | Monitor/manage |
 
 **Minimize Production Disruption:**
 
-| Rule | Implementation |
-|------|----------------|
+| Guideline | Implementation |
+|-----------|----------------|
 | Small changes | Incremental testing |
 | Short duration | **<2 minutes per test** |
-| Off-peak | When possible |
-| Rollback plan | Always prepared |
+| Low impact | Test during off-peak |
 
 ---
 
-## 🎯 Quick Reference Chart
+## 🎯 Quick Memory Guide
 
-| Question | Key Concepts | Critical Points |
-|----------|-------------|----------------|
-| **Q1: Requirements** | MTBF/MTTR, Rural constraints | ≥99% availability, <250ms RTT, Starlink |
-| **Q2: Topology** | 3 Layers, 3 Themes | Core/Dist/Access, Hierarchy/Redundancy/Modularity |
-| **Q3: Addressing** | 10.0.0.0/8, NAT | DHCP reservations, hierarchical DNS |
-| **Q4: Protocols** | OSPF, BGP, STP | OSPF inside, BGP outside, switch first |
-| **Q5: Testing** | Prototype, tools | Pilot deployment, <2min tests, regression |
+### 3-3-3 Rule
+
+**3 Layers:**
+- Core (Hubs + Cloud)
+- Distribution (Policy + Inter-VLAN)
+- Access (Users)
+
+**3 Themes:**
+- Hierarchy (Scalability)
+- Redundancy (Availability)
+- Modularity (Local changes)
+
+**3 Key Protocols:**
+- OSPF (Interior)
+- BGP (Exterior to Cloud)
+- STP (Loop prevention)
+
+### MTBF + MTTR = Availability
+
+```
+High MTBF (long time between failures)
++
+Low MTTR (quick repairs)
+=
+≥99% Availability ✅
+```
+
+### TEST Framework
+
+- **T**argets: Set objectives (≥80 Mbps, <30s failover, <10s convergence)
+- **E**nvironment: Prototype (1 hub + 1 branch pilot)
+- **S**hort: <2 min tests
+- **T**ools: Packet Tracer, Wireshark, iPerf
+
+### Addressing Hierarchy
+
+```
+10.0.0.0/8 (Private Space)
+    ├── 10.0.0.0/22 (Core/Backbone)
+    ├── 10.H.0.0/24 (Hubs, H=1-3)
+    │       └── /26 or /25 per VLAN
+    └── 10.B.0.0/24 (Branches, B=11-17)
+            └── /26 or /25 per VLAN
+```
+
+### Switch vs Route
+
+```
+Switch when possible ✅
+    ↓
+Route to interconnect VLANs
+    ↓
+Access: Switch dominant
+Distribution: Inter-VLAN routing
+Core: WAN routing
+```
 
 ---
 
-## 📝 Memory Mnemonics
+## 📊 Critical Numbers
 
-**3-3-3 Rule:**
-- **3 Layers:** Core, Distribution, Access
-- **3 Themes:** Hierarchy, Redundancy, Modularity  
-- **3 Protocols:** OSPF (interior), BGP (exterior), STP (loops)
-
-**FARM for Health Metrics:**
-- **F**ailure (MTBF)
-- **A**vailability (≥99%)
-- **R**esponse time (<250ms)
-- **M**TTR (repair time)
-
-**TEST Approach:**
-- **T**argets (set objectives)
-- **E**nvironment (prototype)
-- **S**hort tests (<2 min)
-- **T**ools (Packet Tracer, Wireshark)
+| Metric | Target | Context |
+|--------|--------|---------|
+| **Availability** | ≥99% | Critical services |
+| **Response Time** | <250 ms RTT | Telemedicine |
+| **Throughput** | ≥80 Mbps | Starlink WAN |
+| **Failover** | <30 seconds | RTO requirement |
+| **OSPF Convergence** | <10 seconds | Route updates |
+| **Test Duration** | <2 minutes | Production testing |
+| **ADSL (old)** | ~5 Mbps down | Poor performance |
 
 ---
 
-*📚 Good luck on your exam!*
+*📚 Study smart, not hard! Good luck! �
